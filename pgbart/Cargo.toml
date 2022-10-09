@@ -1,0 +1,14 @@
+[package]
+name = "pgbart"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "pgbart"
+crate-type = ["lib"]
+
+[dependencies]
+rand = "0.8.5"
+ndarray = "0.15.6"
+ndarray-rand = "0.14.0"
+rand_distr = "0.4.3"
