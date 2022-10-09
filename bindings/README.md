@@ -4,7 +4,7 @@ Unfortunately, installing PyMC is a pain without `conda`, so I would recommend u
 
 ```bash
 export ENV_NAME="rust_pgbart_dev"
-conda create -c conda-forge -n ${ENV_NAME} "pymc>=4" "maturin"
+conda create -c conda-forge -n ${ENV_NAME} "pymc>=4" maturin ipykernel arviz numba numpy
 conda activate ${ENV_NAME}
 ```
 
