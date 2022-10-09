@@ -1,0 +1,13 @@
+[package]
+name = "rust_pgbart"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "rust_pgbart"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.17.1", features = ["extension-module", "auto-initialize"] }
+numpy = { version = "0.17.2"}
+pgbart = { version = "*", path = "../pgbart" }

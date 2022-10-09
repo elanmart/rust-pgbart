@@ -1,0 +1,27 @@
+[project]
+name = "rust_pgbart"
+readme = "README.md"
+description = "Implementation of Particle Gibbs sampler for Bayesian Addititve Regression Trees"
+version = "0.1.0"
+license = {file = "../LICENSE"}
+requires-python = ">=3.7"
+authors = [
+  {name = "Marcin Elantkowski", email = "marcin.elantkowski@gmail.com"},
+]
+
+dependencies = [
+  "numpy>=1.20",
+  "pymc>=4"
+]
+
+[tool.maturin]
+python-source = "py_src"
+
+classifiers = [
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: Implementation :: CPython",
+]
+
+[build-system]
+requires = ["maturin>=0.13,<0.14"]
+build-backend = "maturin"
