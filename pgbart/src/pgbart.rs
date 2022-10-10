@@ -180,7 +180,7 @@ impl PgBartState {
 
         // Initialize the predictions at first iteration. Also initialize feat importance
         let predictions: Vec<f32> = vec![mu; X.n_rows];
-        let variable_inclusion: Vec<u32> = Vec::new();
+        let variable_inclusion: Vec<u32> = vec![0; X.n_cols];
 
         // Initilize the trees (m trees with root nodes only)
         // We store the trees wrapped with Particle structs since it simplifies the code
