@@ -12,15 +12,35 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+import aesara
+import aesara.link.numba.dispatch
 import numpy as np
-
+from aeppl.logprob import CheckParameterValue
 from aesara import function as aesara_function  # type: ignore
+from numba import carray, cfunc, literal_unroll, njit, types
+from pymc.aesaraf import (inputvars, join_nonshared_inputs,
+                          make_shared_replacements)
 from pymc.model import modelcontext
 from pymc.step_methods.arraystep import ArrayStepShared, Competence
-from pymc.aesaraf import inputvars, join_nonshared_inputs, make_shared_replacements
 
 from rust_pgbart.bart import BARTRV
 from rust_pgbart.rust_pgbart import initialize, step
+
+
+# Provide a numba implementation for CheckParameterValue,
+# which doesn't exist in aesara
+@aesara.link.numba.dispatch.basic.numba_funcify.register(CheckParameterValue)
+def numba_functify_CheckParameterValue(op, **kwargs):
+    msg = f"Invalid parameter value {str(op)}"
+
+    @aesara.link.numba.dispatch.basic.numba_njit
+    def check(value, *conditions):
+        for cond in literal_unroll(conditions):
+            if not cond:
+                raise ValueError(msg)
+        return value
+
+    return check
 
 
 class PGBART(ArrayStepShared):
@@ -68,12 +88,6 @@ class PGBART(ArrayStepShared):
         m = self.bart.m
         alpha = self.bart.alpha
         alpha_vec = self.bart.split_prior
-        shared = make_shared_replacements(initial_values, vars, model)
-        pymc_logp = logp(initial_values, [model.datalogp], vars, shared)
-
-        def model_logp(predictions):
-            r = pymc_logp(predictions)
-            return r
 
         # TODO(elantkom): generalize the code to handle NaNs?
         if np.any(np.isnan(X)):
@@ -84,10 +98,14 @@ class PGBART(ArrayStepShared):
         assert len(shape) == 1
         shape = 1
 
+        shared = make_shared_replacements(initial_values, vars, model)
+        super().__init__(vars, shared)
+
+        numba_fn = make_numba_fn(initial_values, [model.datalogp], vars, shared)
         self.state = initialize(
             X=X,
             y=y,
-            logp=model_logp,
+            logp=numba_fn.address,
             alpha=alpha,
             n_trees=m,
             n_particles=num_particles,
@@ -97,7 +115,6 @@ class PGBART(ArrayStepShared):
         )
 
         self.tune = True
-        super().__init__(vars, shared)
 
     def astep(self, _):
         sum_trees = step(self.state, self.tune)
@@ -113,7 +130,7 @@ class PGBART(ArrayStepShared):
         return Competence.INCOMPATIBLE
 
 
-def logp(point, out_vars, vars, shared):  # pylint: disable=redefined-builtin
+def make_numba_fn(point, out_vars, vars, shared):  # pylint: disable=redefined-builtin
     """Compile Aesara function of the model and the input and output variables.
 
     Parameters
@@ -125,7 +142,31 @@ def logp(point, out_vars, vars, shared):  # pylint: disable=redefined-builtin
     shared: List
         containing :class:`aesara.tensor.Tensor` for depended shared data
     """
+
     out_list, inarray0 = join_nonshared_inputs(point, out_vars, vars, shared)
-    function = aesara_function([inarray0], out_list[0])
+    function = aesara_function([inarray0], out_list[0], mode=aesara.compile.NUMBA)
     function.trust_input = True
-    return function
+
+    print(function.input_storage)
+
+    A = np.random.randn(348).astype(np.float32)
+    B = [s.storage[0] for s in function.input_storage[1:]]
+
+    print(function.vm.storage_map)
+
+    print(function(A))
+    print(function.vm.jit_fn(A, *B))
+
+    chuj
+
+    @cfunc(types.float32(
+        types.CPointer(types.float32),
+        types.intc
+    ))
+    @njit
+    def logp(predictions_ptr, predictions_size):
+        arr = carray(predictions_ptr, (predictions_size, ), np.float32)
+        args = collect_args()
+        return full_logp(arr)
+
+    return logp

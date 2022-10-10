@@ -9,7 +9,6 @@ use crate::data::PythonData;
 use numpy::{PyArray1, PyReadonlyArray1, PyReadonlyArray2};
 use pgbart::pgbart::{PgBartSettings, PgBartState};
 use pyo3::prelude::*;
-use pyo3::types::PyFunction;
 
 #[pyclass(unsendable)]
 struct StateWrapper {
@@ -20,7 +19,7 @@ struct StateWrapper {
 fn initialize(
     X: PyReadonlyArray2<f32>,
     y: PyReadonlyArray1<f32>,
-    logp: Py<PyFunction>,
+    logp: usize,
     alpha: f32,
     n_trees: usize,
     n_particles: usize,
