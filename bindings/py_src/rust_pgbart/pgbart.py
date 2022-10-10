@@ -12,14 +12,15 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+from time import perf_counter, time
+
 import aesara
 import aesara.link.numba.dispatch
 import numpy as np
 from aeppl.logprob import CheckParameterValue
 from aesara import function as aesara_function  # type: ignore
 from numba import carray, cfunc, literal_unroll, njit, types
-from pymc.aesaraf import (inputvars, join_nonshared_inputs,
-                          make_shared_replacements)
+from pymc.aesaraf import inputvars, join_nonshared_inputs, make_shared_replacements
 from pymc.model import modelcontext
 from pymc.step_methods.arraystep import ArrayStepShared, Competence
 
@@ -64,7 +65,7 @@ class PGBART(ArrayStepShared):
     name = "pgbart"
     default_blocked = False
     generates_stats = True
-    stats_dtypes = [{"variable_inclusion": object, "bart_trees": object}]
+    stats_dtypes = [{"Time": object, "N calls": object}]
 
     def __init__(
         self,
@@ -117,8 +118,13 @@ class PGBART(ArrayStepShared):
         self.tune = True
 
     def astep(self, _):
+
+        self.logp_call_counter = 0
+        t0 = perf_counter()
+
         sum_trees = step(self.state, self.tune)
-        stats = {"variable_inclusion": 0., "bart_trees": 0.}
+
+        stats = {"Time": perf_counter() - t0, "N calls": 0}
         return sum_trees, [stats]
 
     @staticmethod
@@ -146,27 +152,13 @@ def make_numba_fn(point, out_vars, vars, shared):  # pylint: disable=redefined-b
     out_list, inarray0 = join_nonshared_inputs(point, out_vars, vars, shared)
     function = aesara_function([inarray0], out_list[0], mode=aesara.compile.NUMBA)
     function.trust_input = True
+    full_logp = function.vm.jit_fn
 
-    print(function.input_storage)
-
-    A = np.random.randn(348).astype(np.float32)
-    B = [s.storage[0] for s in function.input_storage[1:]]
-
-    print(function.vm.storage_map)
-
-    print(function(A))
-    print(function.vm.jit_fn(A, *B))
-
-    chuj
-
-    @cfunc(types.float32(
-        types.CPointer(types.float32),
-        types.intc
-    ))
+    @cfunc(types.float32(types.CPointer(types.float32), types.intc))
     @njit
     def logp(predictions_ptr, predictions_size):
-        arr = carray(predictions_ptr, (predictions_size, ), np.float32)
-        args = collect_args()
-        return full_logp(arr)
+        arr = carray(predictions_ptr, (predictions_size,), np.float32)
+        ret = full_logp(arr)[0]
+        return ret
 
     return logp
