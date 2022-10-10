@@ -224,15 +224,12 @@ impl Particle {
                     self.leaf_value(&data_inds.0, state),
                     self.leaf_value(&data_inds.1, state),
                 );
+                let (left_value, right_value) = leaf_vals;
 
                 // Update the tree
-                let (left_value, right_value) = leaf_vals;
-                let new_inds = {
-                    let msg = "Splitting a leaf failed, meaning the indices in particle were not consistent with the tree";
-                    self.tree
-                        .split_leaf_node(idx, split_idx, split_value, left_value, right_value)
-                        .expect(msg)
-                };
+                let msg = "Splitting a leaf failed, meaning the indices in particle were not consistent with the tree";
+                let ret = self.tree.split_leaf_node(idx, split_idx, split_value, left_value, right_value);
+                let new_inds = ret.expect(msg);
 
                 // Remove the old index, we won't need it anymore
                 self.indices.remove_index(idx);
@@ -292,8 +289,14 @@ impl Particle {
         // Then calls the Sampler to fetch the predicted values for those data points
         // Calculates the mean
         // And calls the state again to sample a value around that mean
-        let node_preds = state.predictions_subset(data_indices);
-        let mu = math::mean(&node_preds);
+        
+        let mu = if data_indices.len() == 0 {
+            0.
+        } else {
+            let node_preds = state.predictions_subset(data_indices);
+            math::mean(&node_preds) / (self.params.n_points as f32)
+        };
+        
         let value = state
             .probabilities()
             .sample_leaf_value(mu, self.params.kfactor);
