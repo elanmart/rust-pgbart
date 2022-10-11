@@ -4,9 +4,12 @@ Implementation of Bayesian Additive Regression Trees (BART) written in Rust.
 
 Python bindings and integration with PyMC and Numpyro (wip) are also provided.
 
-# Building
+# Code organization
 
-See `./bindings/README.md`
+- `pgbart/src` contains the generic implementation of the Particle Gibbs sampler. 
+It does not have any notion of Python or PyMC. It only assumes you can provide the input data (`X`, `y`) and
+a function `logp(predictions) -> float`.
+- `bindings/` contains the Rust + Python + PyMC bindings code. See its `README.md` for details. 
 
 # Todo
 
@@ -21,6 +24,11 @@ This is a work in progress
 - [ ] Support `ND` targets
 - [ ] Support `NaNs`
 - [ ] PyPI package?
+
+# Building
+
+See `./bindings/README.md`
+
 
 # Credits
 
