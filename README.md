@@ -12,6 +12,8 @@ See `./bindings/README.md`
 
 This is a work in progress
 
+- [ ] Out-of-sample predictions (Rust code is there, need to expose it in python)
+- [ ] Variable importance plots (Rust code is there, nede to expose it in python)
 - [ ] Partial dependence plots 
 - [ ] Tests and CI
 - [ ] Docs
