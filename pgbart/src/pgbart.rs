@@ -12,27 +12,27 @@ use rand::{self, Rng};
 pub struct PgBartSettings {
     n_trees: usize,             // Number of trees in the ensemble
     n_particles: usize,         // Number of particles to spawn in each iteration
-    alpha: f32,                 // Prior split probability
-    default_kf: f32,            // Standard deviation of noise added during leaf value sampling
-    batch: (f32, f32),          // How many trees to update in tuning / final phase
-    intial_alpha_vec: Vec<f32>, // Prior on covariates to use as splits
+    alpha: f64,                 // Prior split probability
+    default_kf: f64,            // Standard deviation of noise added during leaf value sampling
+    batch: (f64, f64),          // How many trees to update in tuning / final phase
+    intial_alpha_vec: Vec<f64>, // Prior on covariates to use as splits
 }
 
 // Struct with helpers and settings for most (all?) random things in the algorithm
 pub struct Probabilities {
-    normal: Normal<f32>,      // distro for sampling unit gaussian.
-    uniform: Uniform<f32>,    // distro for sampling uniformly from a pre-defined range
-    alpha_vec: Vec<f32>,      // prior for variable selection
-    spliting_probs: Vec<f32>, // posterior for variable selection
-    alpha: f32,               // prior split probability
+    normal: Normal<f64>,      // distro for sampling unit gaussian.
+    uniform: Uniform<f64>,    // distro for sampling uniformly from a pre-defined range
+    alpha_vec: Vec<f64>,      // prior for variable selection
+    spliting_probs: Vec<f64>, // posterior for variable selection
+    alpha: f64,               // prior split probability
 }
 
 // We had to use the trait here, because otherwise
 // it seems impossible to have a clean callback into Python
 pub trait ExternalData {
-    fn X(&self) -> &Matrix<f32>;
-    fn y(&self) -> &Vec<f32>;
-    fn model_logp(&self, v: &Vec<f32>) -> f32;
+    fn X(&self) -> &Matrix<f64>;
+    fn y(&self) -> &Vec<f64>;
+    fn model_logp(&self, v: &Vec<f64>) -> f64;
 }
 
 // The core of the algorithm
@@ -40,7 +40,7 @@ pub struct PgBartState {
     data: Box<dyn ExternalData>,  // dataset we're training on
     params: PgBartSettings,       // hyperparams
     probabilities: Probabilities, // helpers and settings for most (all?) random things in the algorithm
-    predictions: Vec<f32>,        // current bart predictions, one per data point
+    predictions: Vec<f64>,        // current bart predictions, one per data point
     particles: Vec<Particle>,     // m particles, one per tree
     variable_inclusion: Vec<u32>, // feature importance
     tune: bool,                   // tuning phase indicator
@@ -51,10 +51,10 @@ impl PgBartSettings {
     pub fn new(
         n_trees: usize,
         n_particles: usize,
-        alpha: f32,
-        default_kf: f32,
-        batch: (f32, f32),
-        intial_alpha_vec: Vec<f32>,
+        alpha: f64,
+        default_kf: f64,
+        batch: (f64, f64),
+        intial_alpha_vec: Vec<f64>,
     ) -> Self {
         Self {
             n_trees,
@@ -73,13 +73,13 @@ impl Probabilities {
         let mut rng = rand::thread_rng();
 
         let p = 1. - self.alpha.powi(depth as i32);
-        let res = p < rng.gen::<f32>();
+        let res = p < rng.gen::<f64>();
 
         res
     }
 
     // Sample a new value for a leaf node
-    pub fn sample_leaf_value(&self, mu: f32, kfactor: f32) -> f32 {
+    pub fn sample_leaf_value(&self, mu: f64, kfactor: f64) -> f64 {
         let mut rng = rand::thread_rng();
 
         let norm = self.normal.sample(&mut rng) * kfactor;
@@ -91,7 +91,7 @@ impl Probabilities {
     pub fn sample_split_index(&self) -> usize {
         let mut rng = rand::thread_rng();
 
-        let p = rng.gen::<f32>();
+        let p = rng.gen::<f64>();
         for (idx, value) in self.spliting_probs.iter().enumerate() {
             if p <= *value {
                 return idx;
@@ -102,7 +102,7 @@ impl Probabilities {
     }
 
     // Sample a boolean flag indicating if a node should be split or not
-    pub fn sample_split_value(&self, candidates: &Vec<f32>) -> Option<f32> {
+    pub fn sample_split_value(&self, candidates: &Vec<f64>) -> Option<f64> {
         let mut rng = rand::thread_rng();
 
         if candidates.len() == 0 {
@@ -115,7 +115,7 @@ impl Probabilities {
     }
 
     // Sample a new kf
-    pub fn sample_kf(&self) -> f32 {
+    pub fn sample_kf(&self) -> f64 {
         let mut rng = rand::thread_rng();
         let kf = self.uniform.sample(&mut rng);
 
@@ -123,7 +123,7 @@ impl Probabilities {
     }
 
     // Sample an index according to normalized weights
-    pub fn select_particle(&self, mut particles: Vec<Particle>, weights: &Vec<f32>) -> Particle {
+    pub fn select_particle(&self, mut particles: Vec<Particle>, weights: &Vec<f64>) -> Particle {
         let mut rng = rand::thread_rng();
 
         let dist = WeightedIndex::new(weights).unwrap();
@@ -134,7 +134,7 @@ impl Probabilities {
     }
 
     // Resample the particles according to the weights vector
-    fn resample_particles(&self, particles: Vec<Particle>, weights: &Vec<f32>) -> Vec<Particle> {
+    fn resample_particles(&self, particles: Vec<Particle>, weights: &Vec<f64>) -> Vec<Particle> {
         let mut rng = rand::thread_rng();
 
         let dist = WeightedIndex::new(weights).unwrap();
@@ -166,7 +166,7 @@ impl PgBartState {
         // Unpack
         let X = data.X();
         let y = data.y();
-        let m = params.n_trees as f32;
+        let m = params.n_trees as f64;
         let mu = math::mean(y);
         let leaf_value = mu / m;
 
@@ -179,7 +179,7 @@ impl PgBartState {
         };
 
         // Initialize the predictions at first iteration. Also initialize feat importance
-        let predictions: Vec<f32> = vec![mu; X.n_rows];
+        let predictions: Vec<f64> = vec![mu; X.n_rows];
         let variable_inclusion: Vec<u32> = vec![0; X.n_cols];
 
         // Initilize the trees (m trees with root nodes only)
@@ -192,8 +192,8 @@ impl PgBartState {
         }
 
         // Sampling probabilities
-        let alpha_vec: Vec<f32> = params.intial_alpha_vec.clone(); // We will be updating those, hence the clone
-        let spliting_probs: Vec<f32> = math::normalized_cumsum(&alpha_vec);
+        let alpha_vec: Vec<f64> = params.intial_alpha_vec.clone(); // We will be updating those, hence the clone
+        let spliting_probs: Vec<f64> = math::normalized_cumsum(&alpha_vec);
         let probabilities = Probabilities {
             alpha_vec,
             spliting_probs,
@@ -225,7 +225,7 @@ impl PgBartState {
 
         // Get the default prediction for a new particle
         let y = self.data.y();
-        let mu = math::mean(y) / (self.params.n_particles as f32);
+        let mu = math::mean(y) / (self.params.n_particles as f64);
 
         // Modify each tree sequentially
         for particle_index in indices {
@@ -255,7 +255,7 @@ impl PgBartState {
 
             // Line 20 of the algo in the paper
             // "compute particle weight next round"
-            let log_n_particles = (self.params.n_particles as f32).ln();
+            let log_n_particles = (self.params.n_particles as f64).ln();
             let log_lik = selected.weight().log_likelihood();
 
             selected.weight_mut().set_log_w(log_lik - log_n_particles);
@@ -272,7 +272,7 @@ impl PgBartState {
         }
     }
 
-    fn initialize_particles(&self, p: &Particle, local_preds: &Vec<f32>, mu: f32) -> Vec<Particle> {
+    fn initialize_particles(&self, p: &Particle, local_preds: &Vec<f64>, mu: f64) -> Vec<Particle> {
         // The first particle is the exact copy of the selected tree
         let p0 = p.frozen_copy();
 
@@ -311,7 +311,7 @@ impl PgBartState {
     fn grow_particles(
         &self,
         mut particles: Vec<Particle>,
-        local_preds: &Vec<f32>,
+        local_preds: &Vec<f64>,
     ) -> Vec<Particle> {
         // We'll need the data to grow the particles
         let X = self.data.X();
@@ -381,33 +381,33 @@ impl PgBartState {
     }
 
     // Normalize the particle weights
-    fn normalize_weights(&self, particles: &[Particle]) -> (f32, Vec<f32>) {
+    fn normalize_weights(&self, particles: &[Particle]) -> (f64, Vec<f64>) {
         let log_weights = { particles.iter().map(|p| p.weight().log_w()) };
 
         let max_log_weight = {
             particles
                 .iter()
                 .map(|p| p.weight().log_w())
-                .fold(f32::MIN, |a, b| a.max(b))
+                .fold(f64::MIN, |a, b| a.max(b))
         };
 
         let scaled_log_weights = log_weights.map(|logw| logw - max_log_weight);
 
         // At this point we have
         // scaled_weights = weights / weights.max()
-        let scaled_weights: Vec<f32> = scaled_log_weights.map(|x| x.exp()).collect();
+        let scaled_weights: Vec<f64> = scaled_log_weights.map(|x| x.exp()).collect();
 
         // normalized_scaled_weights = weights / weights.sum()
-        let sum_scaled_weights: f32 = scaled_weights.iter().sum();
-        let normalized_scaled_weights: Vec<f32> = scaled_weights
+        let sum_scaled_weights: f64 = scaled_weights.iter().sum();
+        let normalized_scaled_weights: Vec<f64> = scaled_weights
             .iter()
             .map(|w| (w / sum_scaled_weights) + 1e-12)
             .collect();
 
         // The un-normalized weight assigned to each updatable particle after single growing cycle
         let log_sum_scaled_weights = sum_scaled_weights.ln();
-        let log_n_particles = (self.params.n_particles as f32).ln();
-        let log_w: f32 = max_log_weight + log_sum_scaled_weights - log_n_particles;
+        let log_n_particles = (self.params.n_particles as f64).ln();
+        let log_w: f64 = max_log_weight + log_sum_scaled_weights - log_n_particles;
         // log_w = log ( weights.max() * scaled_weights.mean() )
 
         (log_w, normalized_scaled_weights)
@@ -421,13 +421,13 @@ impl PgBartState {
             self.params.batch.1
         };
 
-        ((self.params.n_trees as f32) * fraction).floor() as usize
+        ((self.params.n_trees as f64) * fraction).floor() as usize
     }
 
     // Get predictions for a subset of data points
-    pub fn predictions_subset(&self, indices: &Vec<usize>) -> Vec<f32> {
+    pub fn predictions_subset(&self, indices: &Vec<usize>) -> Vec<f64> {
         let all_preds = &self.predictions;
-        let mut ret = Vec::<f32>::new();
+        let mut ret = Vec::<f64>::new();
 
         for row_idx in indices {
             ret.push(all_preds[*row_idx]);
@@ -441,7 +441,7 @@ impl PgBartState {
         &self.probabilities
     }
 
-    pub fn predictions(&self) -> &Vec<f32> {
+    pub fn predictions(&self) -> &Vec<f64> {
         &self.predictions
     }
 
