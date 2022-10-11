@@ -11,7 +11,7 @@ use std::collections::{HashMap, HashSet};
 pub struct ParticleParams {
     n_points: usize, // Number of points in the dataset
     n_covars: usize, // Number of covariates in the dataset
-    kfactor: f32,    // Standard deviation of noise added during leaf value sampling
+    kfactor: f64,    // Standard deviation of noise added during leaf value sampling
 }
 
 #[derive(Clone)]
@@ -23,8 +23,8 @@ struct Indices {
 
 #[derive(Clone)]
 pub struct Weight {
-    log_w: f32,          // Log weight of this particle
-    log_likelihood: f32, // Log-likelihood from the previous iteration
+    log_w: f64,          // Log weight of this particle
+    log_likelihood: f64, // Log-likelihood from the previous iteration
 }
 
 #[derive(Clone)]
@@ -44,13 +44,13 @@ impl Weight {
     }
 
     // Sets the log-weight and log-likelihood of this particle to a fixed value
-    pub fn reset(&mut self, log_likelihood: f32) {
+    pub fn reset(&mut self, log_likelihood: f64) {
         self.log_w = log_likelihood;
         self.log_likelihood = log_likelihood;
     }
 
     // Updates the log-weight of this particle, and sets the log-likelohood to a new value
-    pub fn update(&mut self, log_likelihood: f32) {
+    pub fn update(&mut self, log_likelihood: f64) {
         let log_w = self.log_w + log_likelihood - self.log_likelihood;
 
         self.log_w = log_w;
@@ -58,22 +58,22 @@ impl Weight {
     }
 
     // --- Getters ---
-    pub fn log_w(&self) -> f32 {
+    pub fn log_w(&self) -> f64 {
         self.log_w
     }
 
-    pub fn log_likelihood(&self) -> f32 {
+    pub fn log_likelihood(&self) -> f64 {
         self.log_likelihood
     }
 
     // --- Setters ---
-    pub fn set_log_w(&mut self, log_w: f32) {
+    pub fn set_log_w(&mut self, log_w: f64) {
         self.log_w = log_w;
     }
 }
 
 impl ParticleParams {
-    pub fn new(n_points: usize, n_covars: usize, kfactor: f32) -> Self {
+    pub fn new(n_points: usize, n_covars: usize, kfactor: f64) -> Self {
         ParticleParams {
             n_points,
             n_covars,
@@ -81,7 +81,7 @@ impl ParticleParams {
         }
     }
 
-    pub fn with_new_kf(&self, kfactor: f32) -> Self {
+    pub fn with_new_kf(&self, kfactor: f64) -> Self {
         ParticleParams {
             n_points: self.n_points,
             n_covars: self.n_covars,
@@ -138,7 +138,7 @@ impl Indices {
 
 impl Particle {
     // Creates a new Particle with specified Params and a single-node (root only) Tree
-    pub fn new(params: ParticleParams, leaf_value: f32) -> Self {
+    pub fn new(params: ParticleParams, leaf_value: f64) -> Self {
         let tree = Tree::new(leaf_value);
         let indices = Indices::new(params.n_points);
         let weight = Weight::new();
@@ -184,7 +184,7 @@ impl Particle {
 
     // Attempts to grow this particle (or, more precisely, the tree inside this particle)
     // Returns a boolean indicating if the tree structure was modified
-    pub fn grow(&mut self, X: &Matrix<f32>, state: &PgBartState) -> bool {
+    pub fn grow(&mut self, X: &Matrix<f64>, state: &PgBartState) -> bool {
         // Check if there are any nodes left to expand
         let idx = match self.indices.pop_expansion_index() {
             Some(value) => value,
@@ -247,8 +247,8 @@ impl Particle {
     // Generate predictions for this particle.
     // We do not need to traverse the tree, because during training
     // We simply keep track the leaf index where each data points lands
-    pub fn predict(&self) -> Vec<f32> {
-        let mut y_hat: Vec<f32> = vec![0.; self.params.n_points];
+    pub fn predict(&self) -> Vec<f64> {
+        let mut y_hat: Vec<f64> = vec![0.; self.params.n_points];
 
         for idx in &self.indices.leaf_nodes {
             let leaf = self.tree.get_node(idx).unwrap().as_leaf().unwrap();
@@ -265,8 +265,8 @@ impl Particle {
     fn split_data(
         &self,
         row_indices: &Vec<usize>,
-        feature_values: &Vec<f32>,
-        split_value: &f32,
+        feature_values: &Vec<f64>,
+        split_value: &f64,
     ) -> (Vec<usize>, Vec<usize>) {
         let mut left_indices: Vec<usize> = vec![];
         let mut right_indices: Vec<usize> = vec![];
@@ -283,7 +283,7 @@ impl Particle {
     }
 
     // Returns a new sampled leaf value
-    fn leaf_value(&self, data_indices: &Vec<usize>, state: &PgBartState) -> f32 {
+    fn leaf_value(&self, data_indices: &Vec<usize>, state: &PgBartState) -> f64 {
         // TODO: This feels a bit off
         // This function takes as input indices of data points that ended in a particular leaf
         // Then calls the Sampler to fetch the predicted values for those data points
@@ -294,7 +294,7 @@ impl Particle {
             0.
         } else {
             let node_preds = state.predictions_subset(data_indices);
-            math::mean(&node_preds) / (self.params.n_points as f32)
+            math::mean(&node_preds) / (self.params.n_points as f64)
         };
         
         let value = state

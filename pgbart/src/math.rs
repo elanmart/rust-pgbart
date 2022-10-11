@@ -1,28 +1,28 @@
-pub fn elemwise(v1: &Vec<f32>, v2: &Vec<f32>, f: fn((&f32, &f32)) -> f32) -> Vec<f32> {
+pub fn elemwise(v1: &Vec<f64>, v2: &Vec<f64>, f: fn((&f64, &f64)) -> f64) -> Vec<f64> {
     std::iter::zip(v1, v2).map(f).collect()
 }
 
-pub fn add(v1: &Vec<f32>, v2: &Vec<f32>) -> Vec<f32> {
+pub fn add(v1: &Vec<f64>, v2: &Vec<f64>) -> Vec<f64> {
     elemwise(v1, v2, |(x1, x2)| x1 + x2)
 }
 
-pub fn sub(v1: &Vec<f32>, v2: &Vec<f32>) -> Vec<f32> {
+pub fn sub(v1: &Vec<f64>, v2: &Vec<f64>) -> Vec<f64> {
     elemwise(v1, v2, |(x1, x2)| x1 - x2)
 }
 
-pub fn max(v: &Vec<f32>) -> f32 {
-    v.iter().fold(f32::MIN, |a, &b| a.max(b))
+pub fn max(v: &Vec<f64>) -> f64 {
+    v.iter().fold(f64::MIN, |a, &b| a.max(b))
 }
 
-pub fn mean(v: &Vec<f32>) -> f32 {
-    let sum: f32 = v.iter().sum();
-    sum / v.len() as f32
+pub fn mean(v: &Vec<f64>) -> f64 {
+    let sum: f64 = v.iter().sum();
+    sum / v.len() as f64
 }
 
-pub fn cumsum(v: &Vec<f32>) -> Vec<f32> {
-    let ret: Vec<f32> = v
+pub fn cumsum(v: &Vec<f64>) -> Vec<f64> {
+    let ret: Vec<f64> = v
         .iter()
-        .scan(0f32, |state, item| {
+        .scan(0f64, |state, item| {
             *state += *item;
             let ret = state;
             Some(*ret)
@@ -32,11 +32,11 @@ pub fn cumsum(v: &Vec<f32>) -> Vec<f32> {
     ret
 }
 
-pub fn normalized_cumsum(v: &Vec<f32>) -> Vec<f32> {
-    let total: f32 = v.iter().sum();
-    let ret: Vec<f32> = v
+pub fn normalized_cumsum(v: &Vec<f64>) -> Vec<f64> {
+    let total: f64 = v.iter().sum();
+    let ret: Vec<f64> = v
         .iter()
-        .scan(0f32, |state, item| {
+        .scan(0f64, |state, item| {
             *state += *item;
             let ret = *state / total;
             Some(ret)
@@ -46,11 +46,11 @@ pub fn normalized_cumsum(v: &Vec<f32>) -> Vec<f32> {
     ret
 }
 
-pub fn stdev(v: &Vec<f32>) -> f32 {
-    let n = v.len() as f32;
+pub fn stdev(v: &Vec<f64>) -> f64 {
+    let n = v.len() as f64;
     let mu = mean(v);
 
-    let f = |carry: f32, item: &f32| carry + (item - mu).powi(2);
+    let f = |carry: f64, item: &f64| carry + (item - mu).powi(2);
     let var = v.iter().fold(0., f) / n;
 
     var.sqrt()

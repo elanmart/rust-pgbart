@@ -3,14 +3,14 @@ use std::collections::HashMap;
 #[derive(Clone)]
 pub struct Leaf {
     index: usize,
-    value: f32,
+    value: f64,
 }
 
 #[derive(Clone)]
 pub struct Internal {
     index: usize,
     split_idx: usize,
-    split_value: f32,
+    split_value: f64,
 }
 
 #[derive(Clone)]
@@ -33,19 +33,19 @@ pub enum TreeError {
 
 impl Leaf {
     // Creates a new leaf
-    pub fn new(index: usize, value: f32) -> Self {
+    pub fn new(index: usize, value: f64) -> Self {
         Leaf { index, value }
     }
 
     // --- Getters ---
-    pub fn value(&self) -> f32 {
+    pub fn value(&self) -> f64 {
         self.value
     }
 }
 
 impl Internal {
     // Creates a new internal node
-    fn new(index: usize, split_idx: usize, value: f32) -> Self {
+    fn new(index: usize, split_idx: usize, value: f64) -> Self {
         Internal {
             index,
             split_idx,
@@ -66,12 +66,12 @@ impl Internal {
 
 impl Node {
     // Create an internal node
-    pub fn leaf(index: usize, value: f32) -> Self {
+    pub fn leaf(index: usize, value: f64) -> Self {
         Node::Leaf(Leaf::new(index, value))
     }
 
     // Create a leaf node
-    pub fn internal(index: usize, split_idx: usize, split_value: f32) -> Self {
+    pub fn internal(index: usize, split_idx: usize, split_value: f64) -> Self {
         Node::Internal(Internal::new(index, split_idx, split_value))
     }
 
@@ -107,7 +107,7 @@ impl Node {
 
 impl Tree {
     // Creates a tree with a single root node
-    pub fn new(root_value: f32) -> Self {
+    pub fn new(root_value: f64) -> Self {
         let root = Node::Leaf(Leaf::new(0, root_value));
         let nodes = HashMap::from_iter([(0, root)]);
         Tree { nodes }
@@ -141,7 +141,7 @@ impl Tree {
     }
 
     // Updates the value of a leaf node
-    pub fn update_leaf_node(&mut self, idx: usize, value: f32) -> Result<(), TreeError> {
+    pub fn update_leaf_node(&mut self, idx: usize, value: f64) -> Result<(), TreeError> {
         self.check_leaf(idx)?;
         self.add_node(Node::leaf(idx, value));
 
@@ -154,9 +154,9 @@ impl Tree {
         &mut self,
         idx: usize,
         split_idx: usize,
-        split_value: f32,
-        left_value: f32,
-        right_value: f32,
+        split_value: f64,
+        left_value: f64,
+        right_value: f64,
     ) -> Result<(usize, usize), TreeError> {
         self.check_leaf(idx)?;
 
@@ -174,7 +174,7 @@ impl Tree {
     }
 
     // Returns a prediction for a given example
-    pub fn predict(&self, x: &Vec<f32>) -> f32 {
+    pub fn predict(&self, x: &Vec<f64>) -> f64 {
         // We start with the root node
         let mut node = self.root();
 
