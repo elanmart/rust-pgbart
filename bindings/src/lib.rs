@@ -17,15 +17,15 @@ struct StateWrapper {
 
 #[pyfunction]
 fn initialize(
-    X: PyReadonlyArray2<f32>,
-    y: PyReadonlyArray1<f32>,
+    X: PyReadonlyArray2<f64>,
+    y: PyReadonlyArray1<f64>,
     logp: usize,
-    alpha: f32,
+    alpha: f64,
     n_trees: usize,
     n_particles: usize,
-    kfactor: f32,
-    batch: (f32, f32),
-    split_covar_prior: PyReadonlyArray1<f32>,
+    kfactor: f64,
+    batch: (f64, f64),
+    split_covar_prior: PyReadonlyArray1<f64>,
 ) -> StateWrapper {
     let data = PythonData::new(X, y, logp);
     let data = Box::new(data);
@@ -44,7 +44,7 @@ fn initialize(
 }
 
 #[pyfunction]
-fn step<'py>(py: Python<'py>, wrapper: &mut StateWrapper, tune: bool) -> &'py PyArray1<f32> {
+fn step<'py>(py: Python<'py>, wrapper: &mut StateWrapper, tune: bool) -> &'py PyArray1<f64> {
     wrapper.state.set_tune(tune);
     wrapper.state.step();
     
