@@ -1,18 +1,6 @@
-# pylint: disable=unused-argument
-# pylint: disable=arguments-differ
-#   Copyright 2022 The PyMC Developers
-#
-#   Licensed under the Apache License, Version 2.0 (the "License");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
-#
-#       http://www.apache.org/licenses/LICENSE-2.0
-#
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an "AS IS" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
+# The code in this file was copied almost entirely from
+# https://github.com/pymc-devs/pymc-bart/blob/0f0e3617ac03877448f5eded315e8cb810d1d0cb/pymc_bart/pgbart.py
+
 
 import aesara.tensor as at
 import numpy as np
