@@ -22,14 +22,6 @@ conda activate ${ENV_NAME}
 
 Building the code is done with `maturin`
 
-For development:
-
 ```bash
-maturin develop
-```
-
-For release:
-
-```bash
-maturin build -r
+maturin develop --release
 ```
