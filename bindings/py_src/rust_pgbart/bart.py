@@ -1,18 +1,6 @@
-# pylint: disable=unused-argument
-# pylint: disable=arguments-differ
-#   Copyright 2022 The PyMC Developers
-#
-#   Licensed under the Apache License, Version 2.0 (the "License");
-#   you may not use this file except in compliance with the License.
-#   You may obtain a copy of the License at
-#
-#       http://www.apache.org/licenses/LICENSE-2.0
-#
-#   Unless required by applicable law or agreed to in writing, software
-#   distributed under the License is distributed on an "AS IS" BASIS,
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#   See the License for the specific language governing permissions and
-#   limitations under the License.
+# The code in this file was copied almost entirely from
+# https://github.com/pymc-devs/pymc-bart/blob/0f0e3617ac03877448f5eded315e8cb810d1d0cb/pymc_bart/pgbart.py
+
 
 import aesara.tensor as at
 import numpy as np
@@ -32,7 +20,7 @@ class BARTRV(RandomVariable):
     name = "BART"
     ndim_supp = 1
     ndims_params = [2, 1, 0, 0, 1]
-    dtype = "float32"
+    dtype = "float64"
     _print_name = ("BART", "\\operatorname{BART}")
     all_trees = None
 
@@ -87,7 +75,7 @@ class BART(Distribution):
         X, Y = preprocess_xy(X, Y)
 
         if split_prior is None:
-            split_prior = np.ones(X.shape[1], dtype=np.float32)
+            split_prior = np.ones(X.shape[1], dtype=np.float64)
 
         bart_op = type(
             f"BART_{name}",
@@ -146,8 +134,8 @@ def preprocess_xy(X, Y):
     if isinstance(Y, (Series, DataFrame)):
         Y = Y.to_numpy()
 
-    X = np.array(X, dtype=np.float32, copy=True, order="C")
-    Y = np.array(Y, dtype=np.float32, copy=True, order="C")
+    X = np.array(X, dtype=np.float64, copy=True, order="C")
+    Y = np.array(Y, dtype=np.float64, copy=True, order="C")
 
     assert X.shape[0] == Y.shape[0]
     assert X.ndim == 2

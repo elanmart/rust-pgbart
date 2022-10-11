@@ -1,7 +1,8 @@
 .DS_Store
 *~
 
-examples/*
+.ipynb_checkpoints
+playground/*
 
 .vim
 .env
