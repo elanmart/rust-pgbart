@@ -20,7 +20,7 @@ class BARTRV(RandomVariable):
     name = "BART"
     ndim_supp = 1
     ndims_params = [2, 1, 0, 0, 1]
-    dtype = "float32"
+    dtype = "float64"
     _print_name = ("BART", "\\operatorname{BART}")
     all_trees = None
 
@@ -75,7 +75,7 @@ class BART(Distribution):
         X, Y = preprocess_xy(X, Y)
 
         if split_prior is None:
-            split_prior = np.ones(X.shape[1], dtype=np.float32)
+            split_prior = np.ones(X.shape[1], dtype=np.float64)
 
         bart_op = type(
             f"BART_{name}",
@@ -134,8 +134,8 @@ def preprocess_xy(X, Y):
     if isinstance(Y, (Series, DataFrame)):
         Y = Y.to_numpy()
 
-    X = np.array(X, dtype=np.float32, copy=True, order="C")
-    Y = np.array(Y, dtype=np.float32, copy=True, order="C")
+    X = np.array(X, dtype=np.float64, copy=True, order="C")
+    Y = np.array(Y, dtype=np.float64, copy=True, order="C")
 
     assert X.shape[0] == Y.shape[0]
     assert X.ndim == 2
