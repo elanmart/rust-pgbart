@@ -34,6 +34,7 @@ jobs:
             nbconvert
             maturin
             pymc>=4
+            pymc-bart
       - name: Build
         working-directory: bindings
         shell: bash -l {0}
