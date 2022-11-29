@@ -33,7 +33,7 @@ jobs:
             numpy
             nbconvert
             maturin
-            pymc>=4
+            pymc==4.2.1
       - name: Build
         working-directory: bindings
         shell: bash -l {0}
