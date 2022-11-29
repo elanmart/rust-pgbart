@@ -36,10 +36,16 @@ jobs:
             pymc>=4
       - name: Build
         working-directory: bindings
-        run: maturin develop --release
+        shell: bash -l {0}
+        run: |
+          maturin develop --release
       - name: Run Original Notebook
         working-directory: examples
-        run: jupyter nbconvert --to notebook --execute BART_introduction.ipynb
+        shell: bash -l {0}
+        run: |
+          jupyter nbconvert --to notebook --execute BART_introduction.ipynb
       - name: Run Rust Notbeook
         working-directory: examples
-        run: jupyter nbconvert --to notebook --execute BART_introduction_Rust.ipynb
+        shell: bash -l {0}
+        run: |
+          jupyter nbconvert --to notebook --execute BART_introduction_Rust.ipynb
