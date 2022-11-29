@@ -38,6 +38,7 @@ jobs:
         working-directory: bindings
         shell: bash -l {0}
         run: |
+          python -m ipykernel install --user --name rust-pgbart-dev
           maturin develop --release
       - name: Run Original Notebook
         working-directory: examples
