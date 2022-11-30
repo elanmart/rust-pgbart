@@ -1,6 +1,6 @@
 # About
 
-[![ci](https://github.com/elanmart/rust-pgbart/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/elanmart/rust-pgbart/actions/workflows/ci.yaml)
+[![ci](https://github.com/elanmart/rust-pgbart/actions/workflows/ci.yaml/badge.svg)](https://github.com/elanmart/rust-pgbart/actions/workflows/ci.yaml)
 
 This repo implements Particle Gibbs sampler for Bayesian Additive Regression Trees (BART) written in Rust.
 
