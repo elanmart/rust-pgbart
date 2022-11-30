@@ -1,5 +1,7 @@
 # About
 
+[![ci](https://github.com/elanmart/rust-pgbart/actions/workflows/ci.yaml/badge.svg?branch=ci&event=push)](https://github.com/elanmart/rust-pgbart/actions/workflows/ci.yaml)
+
 This repo implements Particle Gibbs sampler for Bayesian Additive Regression Trees (BART) written in Rust.
 
 Python bindings and integration with PyMC and Numpyro (coming soon) are also provided.

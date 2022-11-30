@@ -1,0 +1,56 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    name:  Build for py-${{ matrix.python-version }}
+    runs-on: "ubuntu-latest"
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.8", "3.9", "3.10"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup Conda with Micromamba
+        uses: mamba-org/provision-with-micromamba@main
+        with:
+          environment-file: false
+          environment-name: default
+          channels: conda-forge
+          cache-downloads: true
+          cache-env: true
+          log-level: debug
+          extra-specs: |
+            python=${{ matrix.python-version }}
+            arviz
+            ipykernel
+            jupyter
+            numba
+            numpy
+            nbconvert
+            maturin
+            pymc==4.2.1
+      - name: Python Installs
+        shell: bash -l {0}
+        run: |
+          python -m pip install git+https://github.com/pymc-devs/pymc-bart.git@0.1.0
+          python -m ipykernel install --user --name rust-pgbart-dev
+      - name: Build
+        working-directory: bindings
+        shell: bash -l {0}
+        run: |
+          maturin develop --release
+      - name: Run Original Notebook
+        working-directory: examples
+        shell: bash -l {0}
+        run: |
+          jupyter nbconvert --to notebook --execute BART_introduction.ipynb
+      - name: Run Rust Notbeook
+        working-directory: examples
+        shell: bash -l {0}
+        run: |
+          jupyter nbconvert --to notebook --execute BART_introduction_Rust.ipynb
