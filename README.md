@@ -4,6 +4,8 @@
 
 This repo implements Particle Gibbs sampler for Bayesian Additive Regression Trees (BART) written in Rust.
 
+This implementation is ~10x faster than a vanilla python version, which makes it feasible to run the algorithm on much larger datasets.
+
 Python bindings and integration with PyMC and Numpyro (coming soon) are also provided.
 
 To use the model in PyMC, you can simply write
@@ -25,24 +27,13 @@ It does not have any notion of Python or PyMC. It only assumes you can provide t
 a function `logp(predictions) -> float`.
 - `bindings/` contains the Rust + Python + PyMC bindings code. See its `README.md` for details. 
 
-# Todo
-
-This is a work in progress
-
-- [ ] Out-of-sample predictions (Rust code is there, need to expose it in python)
-- [ ] Variable importance plots (Rust code is there, nede to expose it in python)
-- [ ] Partial dependence plots 
-- [ ] Tests and CI
-- [ ] Docs
-- [ ] Numpyro integration
-- [ ] Support `ND` targets
-- [ ] Support `NaNs`
-- [ ] PyPI package?
-
 # Building
 
 See `./bindings/README.md`
 
+# ToDo
+
+This is still work in progress, and not all features are supported. Most notably out-of-sample prediction and variable importance plots are not yet available in Python (but the Rust code is mostly there).
 
 # Credits
 
